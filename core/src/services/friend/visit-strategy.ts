@@ -885,6 +885,8 @@ export async function visitFriend(
             totalActions.steal += ok;
             if (!Array.isArray(totalActions.stolenPlants)) totalActions.stolenPlants = [];
             totalActions.stolenPlants.push(...stolenPlants);
+            if (!Array.isArray(totalActions.stolenFriendNames)) totalActions.stolenFriendNames = [];
+            totalActions.stolenFriendNames.push(name);
             recordOperation('steal', ok);
             await randomDelay(500, 800);
         }

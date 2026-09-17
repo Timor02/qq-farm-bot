@@ -109,9 +109,7 @@ export interface OfflineReminder {
 
 export interface FeishuNotifyConfig {
   enabled: boolean;
-  command: string;
-  receiverType: 'user' | 'chat';
-  receiverId: string;
+  webhookUrl: string;
 }
 
 export interface UIConfig {

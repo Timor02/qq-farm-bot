@@ -38,9 +38,7 @@ const DEFAULT_OFFLINE_REMINDER: OfflineReminder = {
 
 const DEFAULT_FEISHU_NOTIFY_CONFIG: FeishuNotifyConfig = {
     enabled: false,
-    command: 'lark-cli',
-    receiverType: 'user',
-    receiverId: '',
+    webhookUrl: '',
 };
 
 const DEFAULT_LOGIN_SETTINGS: LoginSettings = {

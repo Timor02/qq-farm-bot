@@ -3,57 +3,62 @@ const test = require('node:test');
 
 const {
     DEFAULT_FEISHU_NOTIFY_CONFIG,
-    buildFeishuCliArgs,
+    assertFeishuNotifyConfig,
+    buildFeishuWebhookPayload,
+    normalizeFeishuWebhookUrl,
     buildStealNotificationText,
     normalizeFeishuNotifyConfig,
 } = require('../dist/services/feishu-notify');
 
-test('normalizeFeishuNotifyConfig trims values and keeps only supported receivers', () => {
+test('normalizeFeishuNotifyConfig trims the webhook URL and ignores CLI fields', () => {
     const config = normalizeFeishuNotifyConfig({
         enabled: true,
-        command: '  lark-cli  ',
-        receiverType: 'CHAT',
-        receiverId: ' oc_test ',
+        webhookUrl: ' https://open.feishu.cn/open-apis/bot/v2/hook/test ',
+        command: 'lark-cli',
+        receiverType: 'chat',
+        receiverId: 'oc_test',
     });
 
     assert.equal(config.enabled, true);
-    assert.equal(config.command, 'lark-cli');
-    assert.equal(config.receiverType, 'chat');
-    assert.equal(config.receiverId, 'oc_test');
+    assert.equal(config.webhookUrl, 'https://open.feishu.cn/open-apis/bot/v2/hook/test');
 });
 
 test('normalizeFeishuNotifyConfig falls back to disabled defaults', () => {
     assert.deepEqual(normalizeFeishuNotifyConfig(null), DEFAULT_FEISHU_NOTIFY_CONFIG);
 });
 
-test('buildFeishuCliArgs uses user and chat receiver flags', () => {
+test('buildStealNotificationText deduplicates crop names', () => {
     const text = buildStealNotificationText({
         accountName: ' farm ',
         count: 2,
         cropNames: ['白菜', '萝卜', '白菜'],
+        victimNames: ['张三', '李四', '张三'],
     });
 
-    const userArgs = buildFeishuCliArgs({
-        enabled: true,
-        command: 'lark-cli',
-        receiverType: 'user',
-        receiverId: 'ou_test',
-    }, text);
-    const chatArgs = buildFeishuCliArgs({
-        enabled: true,
-        command: 'lark-cli',
-        receiverType: 'chat',
-        receiverId: 'oc_test',
-    }, text);
-
-    assert.deepEqual(userArgs, ['im', '+messages-send', '--user-id', 'ou_test', '--text', text]);
-    assert.deepEqual(chatArgs, ['im', '+messages-send', '--chat-id', 'oc_test', '--text', text]);
-    assert.equal(text, '【QQ农场】偷菜提醒\n账号：farm\n数量：2\n作物：白菜/萝卜');
+    assert.equal(text, '【QQ农场】偷菜提醒\n账号：farm\n被偷好友：张三/李四\n数量：2\n作物：白菜/萝卜');
 });
 
-test('buildFeishuCliArgs rejects an enabled config without receiver', () => {
+test('enabled notify config requires a webhook URL', () => {
     assert.throws(
-        () => buildFeishuCliArgs({ enabled: true, command: 'lark-cli', receiverType: 'user', receiverId: '' }, 'text'),
-        /接收对象 ID/,
+        () => assertFeishuNotifyConfig({ enabled: true, webhookUrl: '' }),
+        /Webhook 地址/,
     );
+});
+
+test('normalizeFeishuWebhookUrl accepts official hooks only', () => {
+    assert.equal(
+        normalizeFeishuWebhookUrl('https://open.feishu.cn/open-apis/bot/v2/hook/test-token/'),
+        'https://open.feishu.cn/open-apis/bot/v2/hook/test-token',
+    );
+    assert.throws(
+        () => normalizeFeishuWebhookUrl('https://example.com/open-apis/bot/v2/hook/test'),
+        /官方群机器人/,
+    );
+});
+
+test('buildFeishuWebhookPayload uses Feishu text message format', () => {
+    assert.deepEqual(buildFeishuWebhookPayload('hello'), {
+        msg_type: 'text',
+        content: { text: 'hello' },
+    });
 });

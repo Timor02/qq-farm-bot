@@ -46,7 +46,7 @@ const {
 const { buildFriendVisitPlan } = require('./visit-plan');
 const { getFriendDogState, flushFriendPetCacheNow } = require('./pet-cache');
 const store = require('../../models/store');
-const { buildStealNotificationText, sendFeishuCliMessage } = require('../feishu-notify');
+const { buildStealNotificationText, sendFeishuWebhookMessage } = require('../feishu-notify');
 
 // 延迟引用 pet-sync，它反向依赖本模块的 isFriendCheckRunning
 function petSyncRef(): any {
@@ -94,8 +94,9 @@ async function notifyStealResult(accountName: string, totalActions: any): Promis
             accountName,
             count: totalActions.steal,
             cropNames: totalActions.stolenPlants || [],
+            victimNames: totalActions.stolenFriendNames || [],
         });
-        const result = await sendFeishuCliMessage(config, text);
+        const result = await sendFeishuWebhookMessage(config, text);
         if (!result.ok) {
             logWarn('好友', `飞书偷菜提醒发送失败: ${result.msg}`);
             return;

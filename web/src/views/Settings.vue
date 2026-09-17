@@ -1294,9 +1294,7 @@ const localLoginSettings = ref({
 })
 const localFeishuNotify = ref({
   enabled: false,
-  command: 'lark-cli',
-  receiverType: 'user',
-  receiverId: '',
+  webhookUrl: '',
 })
 const feishuNotifySaving = ref(false)
 const devicePresets = ref<any[]>([])
@@ -1337,9 +1335,7 @@ function normalizeLoginSettings(source: any) {
 function normalizeFeishuNotify(source: any) {
   return {
     enabled: typeof source?.enabled === 'boolean' ? source.enabled : false,
-    command: typeof source?.command === 'string' && source.command.trim() ? source.command.trim() : 'lark-cli',
-    receiverType: source?.receiverType === 'chat' ? 'chat' : 'user',
-    receiverId: typeof source?.receiverId === 'string' ? source.receiverId.trim() : '',
+    webhookUrl: typeof source?.webhookUrl === 'string' ? source.webhookUrl.trim() : '',
   }
 }
 
@@ -1432,8 +1428,9 @@ async function handleSaveSystemConfig() {
 }
 
 async function handleSaveFeishuNotify() {
-  if (localFeishuNotify.value.enabled && !localFeishuNotify.value.receiverId.trim()) {
-    showAlert('开启飞书偷菜提醒前，请配置接收对象 ID', 'danger')
+  if (localFeishuNotify.value.enabled
+    && !localFeishuNotify.value.webhookUrl.trim()) {
+    showAlert('开启飞书偷菜提醒前，请配置群机器人 Webhook 地址', 'danger')
     return
   }
   feishuNotifySaving.value = true
@@ -2162,7 +2159,7 @@ async function handleResetSystemConfig() {
                       飞书偷菜提醒
                     </h4>
                     <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                      偷菜成功后通过本机飞书 CLI 发送汇总提醒
+                      偷菜成功后通过飞书群机器人 Webhook 发送汇总提醒
                     </p>
                   </div>
                 </div>
@@ -2173,24 +2170,10 @@ async function handleResetSystemConfig() {
                     label="启用偷菜提醒"
                   />
                   <BaseInput
-                    v-model="localFeishuNotify.command"
-                    label="CLI 命令"
+                    v-model="localFeishuNotify.webhookUrl"
+                    label="群机器人 Webhook"
                     type="text"
-                    placeholder="lark-cli"
-                  />
-                  <BaseSelect
-                    v-model="localFeishuNotify.receiverType"
-                    label="接收类型"
-                    :options="[
-                      { label: '个人（Open ID）', value: 'user' },
-                      { label: '群聊（Chat ID）', value: 'chat' },
-                    ]"
-                  />
-                  <BaseInput
-                    v-model="localFeishuNotify.receiverId"
-                    label="接收对象 ID"
-                    type="text"
-                    placeholder="ou_xxx 或 oc_xxx"
+                    placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/..."
                   />
                 </div>
 

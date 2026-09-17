@@ -384,7 +384,7 @@ function mountAccountRoutes(app: Application, ctx: AdminContext): void {
                 : { channel: 'webhook', endpoint: '', token: '', secret: '', title: '账号下线提醒', msg: '账号下线', offlineDeleteSec: 0 };
             const feishuNotify = store.getFeishuNotifyConfig
                 ? store.getFeishuNotifyConfig()
-                : { enabled: false, command: 'lark-cli', receiverType: 'user', receiverId: '' };
+                : { enabled: false, webhookUrl: '' };
             res.json({ ok: true, data: { intervals, strategy, preferredSeed, friendQuietHours, automation, stealDelaySeconds, plantOrderRandom, plantDelaySeconds, fertilizerBuyOrganicCount, fertilizerBuyOrganicThresholdHours, fertilizerBuyNormalCount, fertilizerBuyNormalThresholdHours, fertilizerBuyCheckIntervalMinutes, bagSeedPriority, bagSeedMultiLandReservationEnabled, bagSeedLandTypes, bagSeedFallbackStrategy, autoAcceptFriendMinLevel, autoAcceptRequireOwnLevel, autoAcceptHarvestStealEnabled, autoAcceptHarvestStealHarvest, autoAcceptHarvestStealSteal, ui, offlineReminder, feishuNotify } });
         } catch (e: any) {
             handleApiError(res, e);
@@ -426,7 +426,7 @@ function mountAccountRoutes(app: Application, ctx: AdminContext): void {
                         : { wechatQrLogin: true, qqQrLogin: false, napCatEndpoint: '', napCatSignature: '' },
                     feishuNotify: store.getFeishuNotifyConfig
                         ? store.getFeishuNotifyConfig()
-                        : { enabled: false, command: 'lark-cli', receiverType: 'user', receiverId: '' },
+                        : { enabled: false, webhookUrl: '' },
                 },
             });
         } catch (e: any) {
@@ -466,7 +466,7 @@ function mountAccountRoutes(app: Application, ctx: AdminContext): void {
         try {
             const feishuNotify = store.getFeishuNotifyConfig
                 ? store.getFeishuNotifyConfig()
-                : { enabled: false, command: 'lark-cli', receiverType: 'user', receiverId: '' };
+                : { enabled: false, webhookUrl: '' };
             res.json({ ok: true, data: feishuNotify });
         } catch (e: any) {
             handleApiError(res, e);
@@ -479,11 +479,9 @@ function mountAccountRoutes(app: Application, ctx: AdminContext): void {
             const feishuNotify = store.setFeishuNotifyConfig
                 ? store.setFeishuNotifyConfig({
                     enabled: body.enabled,
-                    command: body.command,
-                    receiverType: body.receiverType,
-                    receiverId: body.receiverId,
+                    webhookUrl: body.webhookUrl,
                 })
-                : { enabled: false, command: 'lark-cli', receiverType: 'user', receiverId: '' };
+                : { enabled: false, webhookUrl: '' };
             res.json({ ok: true, data: feishuNotify });
         } catch (e: any) {
             handleApiError(res, e);
