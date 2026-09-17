@@ -107,6 +107,13 @@ export interface OfflineReminder {
   offlineDeleteSec: number;
 }
 
+export interface FeishuNotifyConfig {
+  enabled: boolean;
+  command: string;
+  receiverType: 'user' | 'chat';
+  receiverId: string;
+}
+
 export interface UIConfig {
   theme: 'light' | 'dark';
 }
@@ -144,5 +151,6 @@ export interface GlobalConfig {
   ui: UIConfig;
   loginSettings: LoginSettings;
   offlineReminder: OfflineReminder;
+  feishuNotify: FeishuNotifyConfig;
   systemConfig: SystemConfig | null;
 }

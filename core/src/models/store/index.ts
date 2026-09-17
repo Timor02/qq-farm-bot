@@ -52,6 +52,8 @@ module.exports = {
     setLoginSettings: globalConfig.setLoginSettings,
     getOfflineReminder: globalConfig.getOfflineReminder,
     setOfflineReminder: globalConfig.setOfflineReminder,
+    getFeishuNotifyConfig: globalConfig.getFeishuNotifyConfig,
+    setFeishuNotifyConfig: globalConfig.setFeishuNotifyConfig,
 
     // Accounts
     getAccounts: accounts.getAccounts,

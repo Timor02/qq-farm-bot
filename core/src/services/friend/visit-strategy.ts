@@ -883,6 +883,8 @@ export async function visitFriend(
             const plantNames: string = [...new Set(stolenPlants)].join('/');
             actions.push(`偷${ok}${plantNames ? `(${  plantNames  })` : ''}`);
             totalActions.steal += ok;
+            if (!Array.isArray(totalActions.stolenPlants)) totalActions.stolenPlants = [];
+            totalActions.stolenPlants.push(...stolenPlants);
             recordOperation('steal', ok);
             await randomDelay(500, 800);
         }
@@ -958,4 +960,3 @@ export async function deleteFriend(friendGid: any): Promise<{ ok: true; gid: num
     });
     return { ok: true, gid };
 }
-

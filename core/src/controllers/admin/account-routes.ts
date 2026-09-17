@@ -382,7 +382,10 @@ function mountAccountRoutes(app: Application, ctx: AdminContext): void {
             const offlineReminder = store.getOfflineReminder
                 ? store.getOfflineReminder()
                 : { channel: 'webhook', endpoint: '', token: '', secret: '', title: '账号下线提醒', msg: '账号下线', offlineDeleteSec: 0 };
-            res.json({ ok: true, data: { intervals, strategy, preferredSeed, friendQuietHours, automation, stealDelaySeconds, plantOrderRandom, plantDelaySeconds, fertilizerBuyOrganicCount, fertilizerBuyOrganicThresholdHours, fertilizerBuyNormalCount, fertilizerBuyNormalThresholdHours, fertilizerBuyCheckIntervalMinutes, bagSeedPriority, bagSeedMultiLandReservationEnabled, bagSeedLandTypes, bagSeedFallbackStrategy, autoAcceptFriendMinLevel, autoAcceptRequireOwnLevel, autoAcceptHarvestStealEnabled, autoAcceptHarvestStealHarvest, autoAcceptHarvestStealSteal, ui, offlineReminder } });
+            const feishuNotify = store.getFeishuNotifyConfig
+                ? store.getFeishuNotifyConfig()
+                : { enabled: false, command: 'lark-cli', receiverType: 'user', receiverId: '' };
+            res.json({ ok: true, data: { intervals, strategy, preferredSeed, friendQuietHours, automation, stealDelaySeconds, plantOrderRandom, plantDelaySeconds, fertilizerBuyOrganicCount, fertilizerBuyOrganicThresholdHours, fertilizerBuyNormalCount, fertilizerBuyNormalThresholdHours, fertilizerBuyCheckIntervalMinutes, bagSeedPriority, bagSeedMultiLandReservationEnabled, bagSeedLandTypes, bagSeedFallbackStrategy, autoAcceptFriendMinLevel, autoAcceptRequireOwnLevel, autoAcceptHarvestStealEnabled, autoAcceptHarvestStealHarvest, autoAcceptHarvestStealSteal, ui, offlineReminder, feishuNotify } });
         } catch (e: any) {
             handleApiError(res, e);
         }
@@ -421,6 +424,9 @@ function mountAccountRoutes(app: Application, ctx: AdminContext): void {
                     loginSettings: store.getLoginSettings
                         ? store.getLoginSettings()
                         : { wechatQrLogin: true, qqQrLogin: false, napCatEndpoint: '', napCatSignature: '' },
+                    feishuNotify: store.getFeishuNotifyConfig
+                        ? store.getFeishuNotifyConfig()
+                        : { enabled: false, command: 'lark-cli', receiverType: 'user', receiverId: '' },
                 },
             });
         } catch (e: any) {
@@ -451,6 +457,34 @@ function mountAccountRoutes(app: Application, ctx: AdminContext): void {
                 })
                 : { wechatQrLogin: true, qqQrLogin: false, napCatEndpoint: '', napCatSignature: '' };
             res.json({ ok: true, data: loginSettings });
+        } catch (e: any) {
+            handleApiError(res, e);
+        }
+    });
+
+    app.get('/api/settings/feishu-notify', (_req: Request, res: Response) => {
+        try {
+            const feishuNotify = store.getFeishuNotifyConfig
+                ? store.getFeishuNotifyConfig()
+                : { enabled: false, command: 'lark-cli', receiverType: 'user', receiverId: '' };
+            res.json({ ok: true, data: feishuNotify });
+        } catch (e: any) {
+            handleApiError(res, e);
+        }
+    });
+
+    app.post('/api/settings/feishu-notify', (req: Request, res: Response) => {
+        try {
+            const body = (req.body && typeof req.body === 'object') ? req.body : {};
+            const feishuNotify = store.setFeishuNotifyConfig
+                ? store.setFeishuNotifyConfig({
+                    enabled: body.enabled,
+                    command: body.command,
+                    receiverType: body.receiverType,
+                    receiverId: body.receiverId,
+                })
+                : { enabled: false, command: 'lark-cli', receiverType: 'user', receiverId: '' };
+            res.json({ ok: true, data: feishuNotify });
         } catch (e: any) {
             handleApiError(res, e);
         }

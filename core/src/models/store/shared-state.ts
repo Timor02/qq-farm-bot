@@ -1,4 +1,4 @@
-import type { AccountConfig, AutomationConfig, BagSeedFallbackStrategy, FertilizerLandType, GlobalConfig, IntervalConfig, LoginSettings, OfflineReminder, PlantingStrategy, QuietHoursConfig } from '../../types/config';
+import type { AccountConfig, AutomationConfig, BagSeedFallbackStrategy, FeishuNotifyConfig, FertilizerLandType, GlobalConfig, IntervalConfig, LoginSettings, OfflineReminder, PlantingStrategy, QuietHoursConfig } from '../../types/config';
 export {};
 
 const { DEFAULT_TIME_ZONE, normalizeTimeZone, resolveClientVersion } = require('../../config/config');
@@ -34,6 +34,13 @@ const DEFAULT_OFFLINE_REMINDER: OfflineReminder = {
     title: '账号下线提醒',
     msg: '账号下线',
     offlineDeleteSec: 0,
+};
+
+const DEFAULT_FEISHU_NOTIFY_CONFIG: FeishuNotifyConfig = {
+    enabled: false,
+    command: 'lark-cli',
+    receiverType: 'user',
+    receiverId: '',
 };
 
 const DEFAULT_LOGIN_SETTINGS: LoginSettings = {
@@ -496,6 +503,7 @@ const globalConfig: GlobalConfig = {
     },
     loginSettings: { ...DEFAULT_LOGIN_SETTINGS },
     offlineReminder: { ...DEFAULT_OFFLINE_REMINDER },
+    feishuNotify: { ...DEFAULT_FEISHU_NOTIFY_CONFIG },
     systemConfig: null,
 };
 
@@ -533,6 +541,10 @@ function loadGlobalConfig(): void {
             // offlineReminder normalization done in global-config
             if (data.offlineReminder && typeof data.offlineReminder === 'object') {
                 globalConfig.offlineReminder = data.offlineReminder;
+            }
+
+            if (data.feishuNotify && typeof data.feishuNotify === 'object') {
+                globalConfig.feishuNotify = data.feishuNotify;
             }
 
             if (data.loginSettings && typeof data.loginSettings === 'object') {

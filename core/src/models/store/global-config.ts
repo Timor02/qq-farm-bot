@@ -1,4 +1,4 @@
-import type { AccountConfig, LoginSettings, OfflineReminder, SystemConfig, UIConfig } from '../../types/config';
+import type { AccountConfig, FeishuNotifyConfig, LoginSettings, OfflineReminder, SystemConfig, UIConfig } from '../../types/config';
 export {};
 
 const { readTextFile, writeJsonFileAtomic } = require('../../services/json-db');
@@ -16,6 +16,11 @@ const {
     cloneAccountConfig,
     DEFAULT_ACCOUNT_CONFIG,
 } = sharedState;
+
+const {
+    assertFeishuNotifyConfig,
+    normalizeFeishuNotifyConfig,
+} = require('../../services/feishu-notify');
 
 function normalizeOfflineReminder(input: unknown): OfflineReminder {
     const src: Record<string, any> = (input && typeof input === 'object') ? input as Record<string, any> : {};
@@ -144,6 +149,18 @@ function setOfflineReminder(cfg: Partial<OfflineReminder> | undefined): OfflineR
     return getOfflineReminder();
 }
 
+function getFeishuNotifyConfig(): FeishuNotifyConfig {
+    return normalizeFeishuNotifyConfig(globalConfig.feishuNotify);
+}
+
+function setFeishuNotifyConfig(cfg: Partial<FeishuNotifyConfig> | undefined): FeishuNotifyConfig {
+    const next = normalizeFeishuNotifyConfig({ ...getFeishuNotifyConfig(), ...(cfg || {}) });
+    assertFeishuNotifyConfig(next);
+    globalConfig.feishuNotify = next;
+    saveGlobalConfig();
+    return getFeishuNotifyConfig();
+}
+
 function getSystemConfig(): SystemConfig | null {
     return globalConfig.systemConfig ? { ...globalConfig.systemConfig } : null;
 }
@@ -200,6 +217,7 @@ loadGlobalConfig();
 // Apply offlineReminder normalization after load
 globalConfig.offlineReminder = normalizeOfflineReminder(globalConfig.offlineReminder);
 globalConfig.loginSettings = normalizeLoginSettings(globalConfig.loginSettings);
+globalConfig.feishuNotify = normalizeFeishuNotifyConfig(globalConfig.feishuNotify);
 if (sharedState.systemConfigMigrated) {
     saveGlobalConfig();
     sharedState.systemConfigMigrated = false;
@@ -213,6 +231,8 @@ module.exports = {
     setLoginSettings,
     getOfflineReminder,
     setOfflineReminder,
+    getFeishuNotifyConfig,
+    setFeishuNotifyConfig,
     getSystemConfig,
     setSystemConfig,
 };

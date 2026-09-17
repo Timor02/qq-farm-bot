@@ -1292,6 +1292,13 @@ const localLoginSettings = ref({
   napCatEndpoint: '',
   napCatSignature: '',
 })
+const localFeishuNotify = ref({
+  enabled: false,
+  command: 'lark-cli',
+  receiverType: 'user',
+  receiverId: '',
+})
+const feishuNotifySaving = ref(false)
 const devicePresets = ref<any[]>([])
 const selectedPresetId = ref('')
 const timeZoneOptions = ref([
@@ -1324,6 +1331,15 @@ function normalizeLoginSettings(source: any) {
     qqQrLogin: typeof source?.qqQrLogin === 'boolean' ? source.qqQrLogin : false,
     napCatEndpoint: typeof source?.napCatEndpoint === 'string' ? source.napCatEndpoint.trim() : '',
     napCatSignature: typeof source?.napCatSignature === 'string' ? source.napCatSignature.trim() : '',
+  }
+}
+
+function normalizeFeishuNotify(source: any) {
+  return {
+    enabled: typeof source?.enabled === 'boolean' ? source.enabled : false,
+    command: typeof source?.command === 'string' && source.command.trim() ? source.command.trim() : 'lark-cli',
+    receiverType: source?.receiverType === 'chat' ? 'chat' : 'user',
+    receiverId: typeof source?.receiverId === 'string' ? source.receiverId.trim() : '',
   }
 }
 
@@ -1366,6 +1382,7 @@ async function loadSystemConfig() {
       defaultSystemConfig.value = normalizeSystemConfig(data.data.default, defaultSystemConfig.value)
       localSystemConfig.value = normalizeSystemConfig(data.data.saved || data.data.default, defaultSystemConfig.value)
       localLoginSettings.value = normalizeLoginSettings(data.data.loginSettings)
+      localFeishuNotify.value = normalizeFeishuNotify(data.data.feishuNotify)
     }
   }
   catch (e) {
@@ -1411,6 +1428,26 @@ async function handleSaveSystemConfig() {
   }
   finally {
     systemConfigSaving.value = false
+  }
+}
+
+async function handleSaveFeishuNotify() {
+  if (localFeishuNotify.value.enabled && !localFeishuNotify.value.receiverId.trim()) {
+    showAlert('开启飞书偷菜提醒前，请配置接收对象 ID', 'danger')
+    return
+  }
+  feishuNotifySaving.value = true
+  try {
+    const { data } = await api.post('/api/settings/feishu-notify', localFeishuNotify.value)
+    if (data?.ok)
+      localFeishuNotify.value = normalizeFeishuNotify(data.data)
+    showAlert(data?.ok ? '飞书提醒设置已保存' : getApiErrorMessage(data, '保存失败'), data?.ok ? 'primary' : 'danger')
+  }
+  catch (e: any) {
+    showAlert(`保存失败: ${getApiErrorMessage(e, '未知错误')}`, 'danger')
+  }
+  finally {
+    feishuNotifySaving.value = false
   }
 }
 
@@ -2111,6 +2148,60 @@ async function handleResetSystemConfig() {
                     @click="handleSaveLoginSettings"
                   >
                     保存登录设置
+                  </BaseButton>
+                </div>
+              </section>
+
+              <section class="farm-card rounded-lg p-4">
+                <div class="mb-4 flex items-start gap-3">
+                  <div class="h-9 w-9 flex shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-600 dark:bg-sky-900/25 dark:text-sky-400">
+                    <span class="i-carbon-notification text-xl" />
+                  </div>
+                  <div>
+                    <h4 class="text-base text-gray-900 font-bold dark:text-gray-100">
+                      飞书偷菜提醒
+                    </h4>
+                    <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                      偷菜成功后通过本机飞书 CLI 发送汇总提醒
+                    </p>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-gray-50/70 p-4 sm:grid-cols-2 dark:border-gray-700 dark:bg-gray-900/30">
+                  <BaseSwitch
+                    v-model="localFeishuNotify.enabled"
+                    label="启用偷菜提醒"
+                  />
+                  <BaseInput
+                    v-model="localFeishuNotify.command"
+                    label="CLI 命令"
+                    type="text"
+                    placeholder="lark-cli"
+                  />
+                  <BaseSelect
+                    v-model="localFeishuNotify.receiverType"
+                    label="接收类型"
+                    :options="[
+                      { label: '个人（Open ID）', value: 'user' },
+                      { label: '群聊（Chat ID）', value: 'chat' },
+                    ]"
+                  />
+                  <BaseInput
+                    v-model="localFeishuNotify.receiverId"
+                    label="接收对象 ID"
+                    type="text"
+                    placeholder="ou_xxx 或 oc_xxx"
+                  />
+                </div>
+
+                <div class="mt-3 flex justify-end border-t pt-3 dark:border-gray-700">
+                  <BaseButton
+                    variant="primary"
+                    size="sm"
+                    :loading="feishuNotifySaving"
+                    @click="handleSaveFeishuNotify"
+                  >
+                    保存飞书提醒设置
                   </BaseButton>
                 </div>
               </section>

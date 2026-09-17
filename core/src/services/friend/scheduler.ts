@@ -45,6 +45,8 @@ const {
 } = require('./visit-strategy');
 const { buildFriendVisitPlan } = require('./visit-plan');
 const { getFriendDogState, flushFriendPetCacheNow } = require('./pet-cache');
+const store = require('../../models/store');
+const { buildStealNotificationText, sendFeishuCliMessage } = require('../feishu-notify');
 
 // 延迟引用 pet-sync，它反向依赖本模块的 isFriendCheckRunning
 function petSyncRef(): any {
@@ -81,6 +83,29 @@ const OP_NAMES: Record<number, string> = {
     10007: '帮助操作 #10007',
     10008: '铲除',
 };
+
+async function notifyStealResult(accountName: string, totalActions: any): Promise<void> {
+    if (!totalActions || !(totalActions.steal > 0)) return;
+    const config = store.getFeishuNotifyConfig ? store.getFeishuNotifyConfig() : null;
+    if (!config?.enabled) return;
+
+    try {
+        const text = buildStealNotificationText({
+            accountName,
+            count: totalActions.steal,
+            cropNames: totalActions.stolenPlants || [],
+        });
+        const result = await sendFeishuCliMessage(config, text);
+        if (!result.ok) {
+            logWarn('好友', `飞书偷菜提醒发送失败: ${result.msg}`);
+            return;
+        }
+        log('好友', `飞书偷菜提醒已发送: ${accountName}`, { module: 'friend', event: '飞书提醒', result: 'ok' });
+    }
+    catch (e: any) {
+        logWarn('好友', `飞书偷菜提醒发送失败: ${e?.message || e}`);
+    }
+}
 
 // ============ 操作限制相关 ============
 
@@ -411,6 +436,8 @@ export async function checkFriends(options: CheckFriendsOptions = {}): Promise<b
             }
         }
 
+        void notifyStealResult(state.name || accountId, totalActions).catch(() => undefined);
+
         // 生成总结日志
         const summary: string[] = [];
         if (totalActions.steal > 0) summary.push(`偷${totalActions.steal}`);
@@ -636,4 +663,3 @@ async function acceptFriendsWithRetry(gids: number[]): Promise<void> {
 export function isHelpExpLimitReached(): boolean {
     return helpAutoDisabledByLimit;
 }
-
